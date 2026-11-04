@@ -16,6 +16,17 @@ from .report import FORMATS, render
 from .rules import RULES
 
 EXIT_OK, EXIT_FINDINGS, EXIT_ERROR = 0, 1, 2
+EXIT_INTERRUPTED = 130
+
+
+def _timeout(value: str) -> float:
+    try:
+        seconds = float(value)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"invalid number: {value!r}") from None
+    if not 0 < seconds <= 300:
+        raise argparse.ArgumentTypeError("must be greater than 0 and at most 300 seconds")
+    return seconds
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -33,7 +44,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--fail-on", choices=SEVERITIES, default="high", help="exit 1 when a finding is at least this severe (default: high)"
         )
         p.add_argument("--ignore", default="", help="comma-separated rule ids to skip, e.g. AL110,AL111")
-        p.add_argument("--timeout", type=float, default=10.0, help="network timeout in seconds (default: 10)")
+        p.add_argument("--timeout", type=_timeout, default=10.0, help="network timeout in seconds (default: 10)")
         p.add_argument("--no-color", action="store_true", help="disable colors in text output")
 
     provider = sub.add_parser("provider", help="audit provider metadata from an issuer URL or a JSON file")
@@ -74,10 +85,28 @@ def run_provider(args: argparse.Namespace) -> list[dict]:
 
 
 def main(argv: list[str] | None = None) -> int:
+    try:
+        return _main(argv)
+    except KeyboardInterrupt:
+        print("authlint: interrupted", file=sys.stderr)
+        return EXIT_INTERRUPTED
+
+
+def _print(text: str) -> None:
+    """Print to stdout, tolerating a reader that exits early (e.g. `authlint rules | head`)."""
+    try:
+        print(text)
+        sys.stdout.flush()
+    except BrokenPipeError:
+        # Point stdout at devnull so the interpreter does not raise again when it flushes on exit.
+        devnull = os.open(os.devnull, os.O_WRONLY)
+        os.dup2(devnull, sys.stdout.fileno())
+
+
+def _main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     if args.command == "rules":
-        for rule in RULES.values():
-            print(f"{rule.id}  {rule.severity:<8} {rule.target:<8} {rule.title}  [{rule.reference}]")
+        _print("\n".join(f"{r.id}  {r.severity:<8} {r.target:<8} {r.title}  [{r.reference}]" for r in RULES.values()))
         return EXIT_OK
 
     ignore = {r.strip().upper() for r in args.ignore.split(",") if r.strip()}
@@ -108,6 +137,8 @@ def main(argv: list[str] | None = None) -> int:
         args.format == "text" and not args.no_color and not args.output and sys.stdout.isatty() and "NO_COLOR" not in os.environ
     )
     output = render(results, args.format, color)
+    threshold = severity_rank(args.fail_on)
+    failed = any(severity_rank(f.severity) >= threshold for r in results for f in r["findings"])
     if args.output:
         try:
             with open(args.output, "w", encoding="utf-8") as handle:
@@ -116,10 +147,7 @@ def main(argv: list[str] | None = None) -> int:
             print(f"authlint: cannot write {args.output}: {exc.strerror}", file=sys.stderr)
             return EXIT_ERROR
     else:
-        print(output)
-
-    threshold = severity_rank(args.fail_on)
-    failed = any(severity_rank(f.severity) >= threshold for r in results for f in r["findings"])
+        _print(output)
     return EXIT_FINDINGS if failed else EXIT_OK
 
 
