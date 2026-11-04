@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-from urllib.parse import urlsplit
-
 from .findings import Finding
-from .provider import _strings, finding
+from .provider import _strings, finding, safe_split
 
 LOOPBACK_IPS = ("127.0.0.1", "::1")
 
@@ -15,7 +13,8 @@ def check_client(client: object) -> list[Finding]:
     if isinstance(client, list):
         findings: list[Finding] = []
         for item in client:
-            findings += check_client(item)
+            if isinstance(item, dict):  # one level only: a list of registrations
+                findings += check_client(item)
         return findings
     if not isinstance(client, dict):
         return []
@@ -25,8 +24,8 @@ def check_client(client: object) -> list[Finding]:
 
     for uri in _strings(client.get("redirect_uris")):
         location = f"{name}: {uri}"
-        parts = urlsplit(uri)
-        if parts.scheme == "http":
+        parts = safe_split(uri)
+        if parts is not None and parts.scheme == "http":
             if parts.hostname in LOOPBACK_IPS:
                 pass  # RFC 8252 allows http on loopback IP literals for native apps
             elif parts.hostname == "localhost":
