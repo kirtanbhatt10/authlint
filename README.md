@@ -1,7 +1,7 @@
 # authlint
 
 [![ci](https://github.com/kirtanbhatt10/authlint/actions/workflows/ci.yml/badge.svg)](https://github.com/kirtanbhatt10/authlint/actions/workflows/ci.yml)
-![python](https://img.shields.io/badge/python-3.10%20%E2%80%93%203.13-3776AB)
+![python](https://img.shields.io/badge/python-3.10%20%E2%80%93%203.14-3776AB)
 ![dependencies](https://img.shields.io/badge/dependencies-0-success)
 ![license](https://img.shields.io/badge/license-MIT-black)
 ![release](https://img.shields.io/github/v/release/kirtanbhatt10/authlint)
@@ -16,9 +16,16 @@ It is a zero-dependency Python CLI and library that works on live issuer URLs
 or saved JSON files, and outputs text, JSON, Markdown or SARIF so it can gate
 changes in CI.
 
+<p align="center">
+  <img src="docs/demo.svg" alt="Terminal demo: authlint flags a weak OAuth provider, a JWKS that leaks private keys and risky client registrations, then passes a hardened provider and writes SARIF for CI" width="900">
+</p>
+
+<details>
+<summary>The same output as text</summary>
+
 ```text
 $ authlint provider examples/weak-provider.json
-authlint 0.1.0
+authlint 0.1.1
 
 examples/weak-provider.json  (provider)
   9 finding(s): 2 high, 2 medium, 4 low, 1 info
@@ -34,6 +41,8 @@ examples/weak-provider.json  (provider)
   ...
 ```
 
+</details>
+
 ## Why
 
 OAuth bugs rarely live in code you can grep. They live in configuration: an
@@ -46,8 +55,9 @@ actually publishes.
 ## Install
 
 ```bash
-pip install git+https://github.com/kirtanbhatt10/authlint@v0.1.0
-# or the wheel attached to the GitHub release
+pipx install git+https://github.com/kirtanbhatt10/authlint@v0.1.1   # isolated CLI
+pip install git+https://github.com/kirtanbhatt10/authlint@v0.1.1    # or into the current environment
+# or download the wheel attached to the latest GitHub release
 ```
 
 Python 3.10 or newer. No third-party dependencies.
@@ -124,7 +134,7 @@ is reported as `AL101` info, not as a mismatch.
 ## GitHub Action
 
 ```yaml
-- uses: kirtanbhatt10/authlint@v0.1.0
+- uses: kirtanbhatt10/authlint@v0.1.1
   with:
     providers: https://login.your-company.example
     fail-on: high
@@ -170,6 +180,11 @@ whether a server really enforces PKCE or exact redirect URI matching. A clean
 report means the published configuration follows RFC 9700, not that the
 deployment is secure. Only audit providers you operate or are allowed to test.
 
+When fetching, authlint sends plain `GET` requests, reads at most 1 MB per
+response, and refuses redirects from `https` to `http` or to non-web schemes.
+Malformed input always ends with exit code 2, so it is never mistaken for a
+failed audit.
+
 ## Development
 
 ```bash
@@ -178,8 +193,9 @@ pytest -q
 ruff check . && ruff format --check .
 ```
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) to add a rule and
-[SECURITY.md](SECURITY.md) to report a vulnerability.
+See [CONTRIBUTING.md](CONTRIBUTING.md) to add a rule,
+[SECURITY.md](SECURITY.md) to report a vulnerability and
+[CHANGELOG.md](CHANGELOG.md) for release notes.
 
 ## License
 

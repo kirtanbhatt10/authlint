@@ -18,7 +18,16 @@ classifiers = [
   "Intended Audience :: Information Technology",
   "Operating System :: OS Independent",
   "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: Internet :: WWW/HTTP",
   "Topic :: Security",
+  "Topic :: Software Development :: Quality Assurance",
+  "Typing :: Typed",
 ]
 dependencies = []
 
@@ -30,7 +39,9 @@ authlint = "authlint.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/kirtanbhatt10/authlint"
+Repository = "https://github.com/kirtanbhatt10/authlint"
 Issues = "https://github.com/kirtanbhatt10/authlint/issues"
+Changelog = "https://github.com/kirtanbhatt10/authlint/blob/main/CHANGELOG.md"
 
 [tool.hatch.version]
 path = "src/authlint/__init__.py"

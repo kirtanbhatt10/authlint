@@ -1,6 +1,6 @@
 """authlint: audit OAuth 2.0 and OpenID Connect deployments against RFC 9700."""
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 from .client import check_client  # noqa: E402
 from .findings import SEVERITIES, Finding  # noqa: E402
