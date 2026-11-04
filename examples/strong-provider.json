@@ -1,0 +1,21 @@
+{
+  "issuer": "https://login.strong.example",
+  "authorization_endpoint": "https://login.strong.example/authorize",
+  "token_endpoint": "https://login.strong.example/token",
+  "userinfo_endpoint": "https://login.strong.example/userinfo",
+  "jwks_uri": "https://login.strong.example/jwks.json",
+  "pushed_authorization_request_endpoint": "https://login.strong.example/par",
+  "scopes_supported": ["openid", "profile", "email"],
+  "response_types_supported": ["code"],
+  "grant_types_supported": ["authorization_code", "refresh_token"],
+  "subject_types_supported": ["pairwise"],
+  "id_token_signing_alg_values_supported": ["ES256", "PS256"],
+  "token_endpoint_auth_methods_supported": ["private_key_jwt", "tls_client_auth"],
+  "token_endpoint_auth_signing_alg_values_supported": ["ES256", "PS256"],
+  "code_challenge_methods_supported": ["S256"],
+  "request_uri_parameter_supported": false,
+  "require_pushed_authorization_requests": true,
+  "authorization_response_iss_parameter_supported": true,
+  "dpop_signing_alg_values_supported": ["ES256"],
+  "tls_client_certificate_bound_access_tokens": true
+}
