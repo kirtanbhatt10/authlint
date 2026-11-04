@@ -60,7 +60,7 @@ def get_json(url: str, timeout: float = 10.0) -> object:
         raise LoadError(f"{url}: HTTP {exc.code}") from exc
     except (urllib.error.URLError, TimeoutError, OSError) as exc:
         raise LoadError(f"{url}: {getattr(exc, 'reason', exc)}") from exc
-    except (http.client.HTTPException, ValueError) as exc:  # malformed URL or broken response
+    except (http.client.HTTPException, ValueError, OverflowError) as exc:  # malformed URL or broken response
         raise LoadError(f"{url}: {exc or type(exc).__name__}") from exc
     if len(body) > MAX_BYTES:
         raise LoadError(f"{url}: response is larger than {MAX_BYTES} bytes")
