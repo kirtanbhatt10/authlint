@@ -6,7 +6,7 @@ The input is the JSON document served at /.well-known/openid-configuration
 
 from __future__ import annotations
 
-from urllib.parse import urlsplit
+from urllib.parse import SplitResult, urlsplit
 
 from .findings import Finding
 from .rules import RULES
@@ -35,6 +35,14 @@ UNSIGNED_ALG_KEYS = {
 def finding(rule_id: str, detail: str, fix: str, location: str = "", severity: str | None = None) -> Finding:
     rule = RULES[rule_id]
     return Finding(rule_id, severity or rule.severity, rule.title, detail, fix, location)
+
+
+def safe_split(url: str) -> SplitResult | None:
+    """urlsplit that returns None for URLs Python cannot parse (e.g. an unclosed IPv6 bracket)."""
+    try:
+        return urlsplit(url)
+    except ValueError:
+        return None
 
 
 def _strings(value: object) -> list[str]:
@@ -79,7 +87,8 @@ def check_provider(meta: dict, expected_issuer: str | None = None) -> list[Findi
         )
 
     if isinstance(issuer, str):
-        if urlsplit(issuer).scheme != "https":
+        issuer_parts = safe_split(issuer)
+        if issuer_parts is None or issuer_parts.scheme != "https":
             findings.append(
                 finding(
                     "AL102",
@@ -112,8 +121,8 @@ def check_provider(meta: dict, expected_issuer: str | None = None) -> list[Findi
         value = meta.get(key)
         if not isinstance(value, str):
             continue
-        parts = urlsplit(value)
-        if parts.scheme != "https" and not _is_loopback(parts.hostname):
+        parts = safe_split(value)
+        if parts is None or (parts.scheme != "https" and not _is_loopback(parts.hostname)):
             findings.append(
                 finding(
                     "AL102",
